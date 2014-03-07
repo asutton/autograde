@@ -41,4 +41,3 @@ class Report(object):
   def note(self, str):
     self.diags += [Note(str)]
 
-

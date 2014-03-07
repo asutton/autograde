@@ -20,29 +20,15 @@ where <hw> is the name of the assignment. Note that that the program must
 be run from within a student directory.
 """
 
-def log(f, s):
-  sys.stdout.write(s)
-  f.write(s)
 
-def summarize(diags, hw):
-  """Create a single report in the user's directory containing a list
-  of errors and diagnostics."""
-
-  p = os.getcwd()
-  u = os.path.basename(p)
-
+def summarize(hw, r):
+  """Write the diagnostics to an eval file in the current diretory."""
   f = open("eval-{0}.log".format(hw), "w")
-  log(f, "== results for {0} ==\n".format(u))
-  n = 0;
-  for d in diags:
-    if d.diags:
-      log(f, str(d) + "\n")
-      n = n + 1;
-  if n == 0:
-    log(f, "success\n")
-  log(f, "\n\n");
-  f.flush()
-  sys.stdout.flush()
+  f.write(str(r))
+  f.close()
+
+  # Also, print the diagnostics
+  print(r)
 
 
 def build(r):
@@ -56,20 +42,8 @@ def build(r):
   grading.make.test(r)
   grading.make.manifest(r)
 
-def grade(hw):
-  """Check the homework assignment by performing a number of operations
-  within the user's directory.
-
-  - Check the project directory
-  - Build the project
-  - Run the tests (if any)
-  - Assemble a summary document
-  """
-
-  # Keep a list of diagnostics for each successive check
-  # of the project directory.
-
-  r = grading.diagnostic.Report()
+def check(hw, r):
+  """Initiate the checking of the homework."""
   if not grading.dir.eval(hw, r):
     return
 
@@ -77,6 +51,16 @@ def grade(hw):
   build(r)
   os.chdir("..")
 
+def grade(hw):
+  """Check the homework assignment by performing a number of operations
+  within the user's directory."""
+
+  # Keep a list of diagnostics for each successive check
+  # of the project directory.
+
+  r = grading.diagnostic.Report()
+  check(hw, r)
+  summarize(hw, r)
 
 def usage():
   """Print usage information."""

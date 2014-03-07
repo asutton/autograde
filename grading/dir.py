@@ -23,7 +23,7 @@ def eval(hw, r):
     return False
 
 
-def find_project(r, hw):
+def find_project(hw, r):
   """Search for a CMakeLists.txt that declares the project hw or
   any other capitalization of that phrase."""
 
@@ -36,7 +36,7 @@ def find_project(r, hw):
   p.wait()
 
   # Transform the output into something readable.
-  for i in txt:
+  for i in out:
     found = i.split(':')
     
     # Scrub the path name
@@ -45,7 +45,7 @@ def find_project(r, hw):
       path = "top-level directory"
     else:
       path = "directory '{0}'".format(path)
-    r.diags += [Note("  possible candidate in the {0}".format(path))]
+    r.note("  possible candidate in the {0}".format(path))
 
 
 def find_build_dir(hw, r):
@@ -59,7 +59,7 @@ def find_build_dir(hw, r):
   os.chdir("..")
 
 
-def find_cache(r, hw):
+def find_cache(hw, r):
   """Search for a CMakeCache.txt and register a diagnostic if one 
   is found."""
 
@@ -77,4 +77,4 @@ def find_cache(r, hw):
     path = os.path.dirname(found[0])[2:]
     if path == "__build__":
       continue
-    r.diags += [Note("found build files in '{0}'".format(path))]
+    r.note("found build files in '{0}'".format(path))
