@@ -6,7 +6,7 @@ homework assignments. The program is designed to configure, build,
 and test student assignments written in C++.
 
 CMake is used to support cross-platform builds, allowing students to
-work in whatever IDE' are supported by that system (e.g., VS, Eclipse,
+work in whatever IDEs are supported by that system (e.g., VS, Eclipse,
 or just a shell and editor).
 
 It is assumed that students will write portable code. That is, they
