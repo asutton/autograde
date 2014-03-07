@@ -2,41 +2,25 @@
 import os
 import os.path
 
+from subprocess import *
 from diagnostic import *
 
-# FIXME: Migrate system commands to use the subprocess module.
+def eval(hw, r):
+  """Evaluate the project directory. This determines if the directory
+  exists. If not, try to determine where the directory might be and
+  emit appropriate diagnostics."""
 
-def check(hw):
-  """Check that the student has correctly created the project
-  directory and has not committed intermediate files."""
-
-  r = Report()
-  if diagnose_hw_dir(r, hw):
-    diagnose_build_dir(r, hw)
-  return r;
-
-def diagnose_hw_dir(r, hw):
-  """If the project directory is missing, try to diagnose the reason
-  for it."""
-  if os.path.exists(hw):
+  # Check that the hw path exists and is a directory. If so, try
+  # to determine if the student has committed a build directory.
+  if os.path.isdir(hw):
+    find_build_dir(hw, r)
     return True
-  
-  # Diagnose the error and try to locate the actual
-  # project directory.
-  r.diags += [Error("project directory '" + hw + "' is missing")]
-  find_project(r, hw)
-  return False
-
-def diagnose_build_dir(r, hw):
-  """Search for and diagnose commits of build intermediates.
-
-  TODO: This should really be a recursive search through the hw directory
-  to find known temporary files.
-  """
-
-  os.chdir(hw)
-  find_cache(r, hw);
-  os.chdir("..")
+  else:
+    # Diagnose the error and try to locate the actual
+    # project directory.
+    r.error("project directory '" + hw + "' is missing")
+    find_project(hw, r)
+    return False
 
 
 def find_project(r, hw):
@@ -46,9 +30,10 @@ def find_project(r, hw):
   # Search in the current directory for a CMakeLists.txt file that
   # contains something like the given project.
   cmd = "find . -name CMakeLists.txt -exec grep -Hi {0} {{}} \; | grep -i project".format(hw)
-  out = os.popen(cmd)
-  txt = out.readlines()
-  out.close()
+  p = Popen(cmd, shell=True, stdout=PIPE)
+  out = p.stdout.read()
+  p.stdout.close()
+  p.wait()
 
   # Transform the output into something readable.
   for i in txt:
@@ -63,17 +48,29 @@ def find_project(r, hw):
     r.diags += [Note("  possible candidate in the {0}".format(path))]
 
 
+def find_build_dir(hw, r):
+  """Search for and diagnose commits of build intermediates.
+
+  TODO: This should really be a recursive search through the hw directory
+  to find known temporary files.
+  """
+  os.chdir(hw)
+  find_cache(hw, r);
+  os.chdir("..")
+
+
 def find_cache(r, hw):
   """Search for a CMakeCache.txt and register a diagnostic if one 
   is found."""
 
   cmd = "find . -name CMakeCache.txt"
-  out = os.popen(cmd)
-  txt = out.readlines()
-  out.close()
+  p = Popen(cmd, shell=True, stdout=PIPE)
+  out = p.stdout.readlines()
+  p.stdout.close()
+  p.wait()
   
   # Transform the output into something readable.
-  for i in txt:
+  for i in out:
     found = i.split(':')
     
     # Scrub the path name

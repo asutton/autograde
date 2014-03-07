@@ -4,8 +4,10 @@ import sys
 import os
 import os.path
 
-import directory
-import build
+import grading.diagnostic
+import grading.dir
+import grading.cmake
+import grading.make
 
 """This program performs a number of common operations on a student's
 homework assignment, and produces a report of the evaluation.
@@ -43,7 +45,18 @@ def summarize(diags, hw):
   sys.stdout.flush()
 
 
-def check(hw):
+def build(r):
+  """Run all of the build steps from within the project directory."""
+  if not grading.cmake.config(r):
+    return False
+
+  if not grading.make.all(r):
+    return False
+
+  grading.make.test(r)
+  grading.make.manifest(r)
+
+def grade(hw):
   """Check the homework assignment by performing a number of operations
   within the user's directory.
 
@@ -55,17 +68,14 @@ def check(hw):
 
   # Keep a list of diagnostics for each successive check
   # of the project directory.
-  diags = []
 
-  diags += [directory.check(hw)]
+  r = grading.diagnostic.Report()
+  if not grading.dir.eval(hw, r):
+    return
 
-  if diags[-1]:
-    diags += [build.check(hw)]
-
-  # if diags[-1]:
-  #   diags += [check_tests(hw)]:
-
-  return summarize(diags, hw)
+  os.chdir(hw)
+  build(r)
+  os.chdir("..")
 
 
 def usage():
@@ -81,7 +91,7 @@ def main():
   cwd = os.getcwd() # current workdin directory
   hw = sys.argv[1]   # assignment name
 
-  check(hw);
+  grade(hw);
 
 if __name__ == "__main__":
   main()

@@ -2,51 +2,39 @@
 import sys
 import os
 import os.path
+
 from subprocess import *
 from diagnostic import *
 
 # The name of the build directory.
 build_dir = "__build__"
 
-def check(hw):
-  r = Report()
+def config(r):
+  """Configure the build system. Note that the current directory must be
+  the top-level of the project directory."""
 
-  os.chdir(hw)
-
-  # Reset and create the build directory.
-  reset()
+  # Reset and create and enter the build directory.
+  os.system("rm -rf {0}".format(build_dir))
   os.mkdir(build_dir)
   os.chdir(build_dir)
 
-  # Check the config and build.
-  if check_config(r):
-    check_build(r)
+  # Try to configure the build.
+  result = cmake(r)
 
-  os.chdir("..") # Leave the build directory
-  # reset()        # Clean up previous work
-  os.chdir("..") # Leave the hw directory
-  return r
+  # Back out to the previous directory.
+  os.chdir("..")
+  return result
 
 
-def reset():
-  os.system("rm -rf {0}".format(build_dir))
-
-
-def log(f, s):
-  """Write output to the given log file."""
-  l = open("../" + f, "w")
-  l.write(s)
-  l.close()
-
-
-def check_config(r):
+def cmake(r):
   """Check the configuration by running CMake. Returns true if 
   configuration succeeds and false otherwise."""
 
-  p = Popen("cmake ..", shell=True, stdin=None, stdout=PIPE, stderr=STDOUT, close_fds=True)
+  p = Popen("cmake ..", shell=True, stdout=PIPE, stderr=STDOUT)
   out = p.stdout.read()
   p.stdout.close()
 
+  # Get the result of configuration, and dignose failure.
   if p.wait() != 0:
     r.error("could not configure the project")
     r.note("configuration output:\n\n + " + out + "\n")
@@ -58,7 +46,7 @@ def check_build(r):
   """Check the builds actually works."""
 
   # Yes... build in VERBOSE mode.
-  p = Popen("VERBOSE=1 make", shell=True, stdin=None, stdout=PIPE, stderr=STDOUT, close_fds=True)
+  p = Popen("VERBOSE=1 make", shell=True, stdout=PIPE, stderr=STDOUT)
   out = p.stdout.read()
   p.stdout.close()
 
