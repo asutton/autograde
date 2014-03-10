@@ -45,18 +45,24 @@ def make_all(r):
 def make_test(r):
   # This isn't really a make command since I want to get extra
   # verbose output, but it's close enough.
-  p = Popen("ctest -W", shell=True, stdout=PIPE, stderr=STDOUT)
+  p = Popen("ctest -VV", shell=True, stdout=PIPE, stderr=STDOUT)
   out = p.stdout.read()
   p.stdout.close()
 
   # Close and detect if there was an error.
   if p.wait() != 0:
-    r.error("error building test suite")
+    r.error("errors reported in test suite")
     r.note("test suite output:\n\n" + out + "\n")
     return False
   return True
 
 def make_manifest(r):
+  """Build the manifest.
+
+  TODO: If the Makefile does not have a manifest target, then don't
+  try to build a manifest."""
+
+
   p = Popen("make manifest", shell=True, stdout=PIPE, stderr=STDOUT)
   out = p.stdout.read()
   p.stdout.close()

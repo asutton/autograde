@@ -4,6 +4,8 @@ import sys
 import os
 import os.path
 
+from subprocess import *
+
 import grading.diagnostic
 import grading.dir
 import grading.cmake
@@ -14,20 +16,46 @@ homework assignment, and produces a report of the evaluation.
 
 The usage of autograde is:
 
-    autograde <hw>
+    autograde [all] <hw>
 
 where <hw> is the name of the assignment. Note that that the program must
-be run from within a student directory.
+be run from within a student directory. If `all` is specified, then the
+the autograde program is applied recursively in all subdirectories of
+the current working directory.
 """
 
 
 def summarize(hw, r):
   """Write the diagnostics to an eval file in the current diretory."""
-  f = open("eval-{0}.log".format(hw), "w")
+  name = os.path.basename(os.getcwd())
+  p = "eval-{0}.log".format(hw)
+  f = open(p, "w")
+  f.write("## Evaluation of %s ##\n\n" % name)
   f.write(str(r))
   f.close()
 
-  # Also, print the diagnostics
+  # Now... Render the log into pdf
+  cmd1 = "a2ps -o __eval__.ps %s"  % p
+  os.system(cmd1)
+
+  cmd2 = "ps2pdf __eval__.ps"
+  os.system(cmd2)
+
+  # Optionally add the manifest ot the build.
+  pdf = "eval-%s-%s.pdf" % (hw, name)
+  man = "%s/__build__/manifest.pdf" % hw
+  print man
+  if os.path.exists(man):
+    cmd3 = "pdfunite __eval__.pdf %s %s" % (man, pdf)
+  else:
+    cmd3 = "mv __eval__.pdf %s" % pdf
+  os.system(cmd3)
+
+  # Cleanup
+  cmd4 = "rm -f __eval__.ps __eval.pdf"
+  os.system(cmd4)
+
+  # Also, print the diagnostics for convenience.
   print(r)
 
 
@@ -62,9 +90,32 @@ def grade(hw):
   check(hw, r)
   summarize(hw, r)
 
+def grade_all(hw):
+  """Grade each student directory in the current directory.
+  """
+
+  # For each student directory, 
+  cwd = os.getcwd()
+  cmd = "%s %s" % (sys.argv[0], hw)
+  ps = [p for p in os.listdir(cwd) if os.path.isdir(p)]
+  for i in ps:
+    # TODO: Be better about excluding directories
+    if i == ".svn":
+      continue
+    os.chdir(i)
+    p = Popen(cmd, shell=True)
+    p.wait()
+    os.chdir("..")
+
+# if __name__ == "__main__":
+#   main()
+
+
+
+
 def usage():
   """Print usage information."""
-  print "usage: autograde <hw>"
+  print "usage: autograde [all] <hw>"
 
 def main():
   """Run the main program."""
@@ -72,10 +123,13 @@ def main():
     usage()
     return
 
-  cwd = os.getcwd() # current workdin directory
-  hw = sys.argv[1]   # assignment name
-
-  grade(hw);
+  if sys.argv[1] == "all":
+    if len(sys.argv) < 3:
+      usage()
+      return
+    grade_all(sys.argv[2])
+  else:
+    grade(sys.argv[1])
 
 if __name__ == "__main__":
   main()
