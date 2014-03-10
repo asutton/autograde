@@ -64,10 +64,11 @@ def build(r):
   if not grading.cmake.config(r):
     return False
 
-  if not grading.make.all(r):
-    return False
+  # Try building the project and then running the test suite.
+  if grading.make.all(r):
+    grading.make.test(r)
 
-  grading.make.test(r)
+  # Always generate the manifest.
   grading.make.manifest(r)
 
 def check(hw, r):
