@@ -34,7 +34,7 @@ a symlink in a directory that is already on path.
 Running autograde
 =================
 
-Usage: `autograde <dir>`
+Usage: `autograde [all] <dir>`
 
 The `<dir>` is the top-level directory of the project. For example, an 
 assignmennt to implement a `Linked_list` class might be developed in a 
@@ -50,13 +50,13 @@ run the test suite, and assemble a manifest for grading. Autograde
 creates a file within the target directory (e.g., `list`) called
 `eval-$dir.log` (e.g., `eval-list`.log) that 
 
-If any stages
-of this process fail, the results ar write
-
 Note that autograde does *not* assign grades to student projects. Grades
 are assigned by evaluating the results of autograde and the project as
 a whole.
 
+If the `all` option is specified, then autograde assumes that you are
+in a directory containing student directories. The program will descend
+into each student directory and run autograde for that student.
 
 Project layout
 ==============
