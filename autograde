@@ -61,12 +61,10 @@ def summarize(hw, r):
 
 def build(r):
   """Run all of the build steps from within the project directory."""
-  if not grading.cmake.config(r):
-    return False
-
-  # Try building the project and then running the test suite.
-  if grading.make.all(r):
-    grading.make.test(r)
+  # Run cmake, make, make test, but only if each actually succeeds.
+  if grading.cmake.config(r):
+    if grading.make.all(r):
+      grading.make.test(r)
 
   # Always generate the manifest.
   grading.make.manifest(r)
