@@ -2,6 +2,7 @@
 import sys
 import os
 import os.path
+import time
 
 from subprocess import *
 from diagnostic import *
@@ -49,8 +50,18 @@ def make_test(r):
   out = p.stdout.read()
   p.stdout.close()
 
-  # Close and detect if there was an error.
-  if p.wait() != 0:
+  t = time.time()
+  while p.poll() is None and (time.time() - t) < 10:
+    time.sleep(.1)
+
+  # If the child hasn't finished yet, then fail hard.
+  if p.poll() is not None:
+    r.error("make test timed out")
+    r.note("test suite output so far:\n\n" + out + "\n")
+    return False
+
+  # If it did finish but didn't return 0, also fail hard.
+  if p.returncode != 0:
     r.error("errors reported in test suite")
     r.note("test suite output:\n\n" + out + "\n")
     return False
